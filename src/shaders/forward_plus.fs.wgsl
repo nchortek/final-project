@@ -67,5 +67,9 @@ fn main(in: FragmentInput) -> @location(0) vec4f
     // .a holds transmittance (the fraction of light that reaches the camera after traversing the volume)
     let scatteringTransmittance: vec4f = textureSampleLevel(integrationBuffer, volumeSampler, vec3f(screenUV, froxelW), 0.0);
     let finalColor = (litSurfaceColor * scatteringTransmittance.a) + scatteringTransmittance.rgb;
-    return vec4f(finalColor, 1.0);
+
+    // Offset each pixel by up to half an 8-bit color level so that smooth gradients
+    // don't quantize into visible bands
+    let ditherNoise: f32 = fract(52.9829189 * fract(dot(floor(in.screenPos.xy), vec2f(0.06711056, 0.00583715))));
+    return vec4f(finalColor + vec3f((ditherNoise - 0.5) / 255.0), 1.0);
 }
