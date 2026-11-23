@@ -63,8 +63,9 @@ export class Volumetrics {
     scatteringExtinctionBuffer: GPUTexture;
     scatteringExtinctionBufferView: GPUTextureView;
 
-    lightingBuffer: GPUTexture;
-    lightingBufferView: GPUTextureView;
+    lightingIndex: number = 0;
+    lightingBuffers: GPUTexture[] = [];
+    lightingBufferViews: GPUTextureView[] = [];
 
     integrationBuffer: GPUTexture;
     public integrationBufferView: GPUTextureView;
@@ -78,11 +79,11 @@ export class Volumetrics {
     voxelizationComputePipeline: GPUComputePipeline;
 
     lightingComputeBindGroupLayout: GPUBindGroupLayout;
-    lightingComputeBindGroup: GPUBindGroup;
+    lightingComputeBindGroups: GPUBindGroup[] = [];
     lightingComputePipeline: GPUComputePipeline;
 
     integrationComputeBindGroupLayout: GPUBindGroupLayout;
-    integrationComputeBindGroup: GPUBindGroup;
+    integrationComputeBindGroups: GPUBindGroup[] = [];
     integrationComputePipeline: GPUComputePipeline;
 
     constructor(camera: Camera, lights: Lights) {
@@ -108,17 +109,19 @@ export class Volumetrics {
 
         this.scatteringExtinctionBufferView = this.scatteringExtinctionBuffer.createView();
 
-        this.lightingBuffer = device.createTexture({
-            label: "lightingBuffer",
-            dimension: "3d",
-            size: [shaders.constants.froxelGridDimX,
-            shaders.constants.froxelGridDimY,
-            shaders.constants.froxelGridDimZ],
-            format: "rgba16float",
-            usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING
-        });
+        for (let i = 0; i < 2; i++) {
+            this.lightingBuffers[i] = device.createTexture({
+                label: `lightingBuffer_${i}`,
+                dimension: "3d",
+                size: [shaders.constants.froxelGridDimX,
+                shaders.constants.froxelGridDimY,
+                shaders.constants.froxelGridDimZ],
+                format: "rgba16float",
+                usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING
+            });
 
-        this.lightingBufferView = this.lightingBuffer.createView();
+            this.lightingBufferViews[i] = this.lightingBuffers[i].createView();
+        }
 
         this.integrationBuffer = device.createTexture({
             label: "integrationBuffer",
@@ -231,40 +234,60 @@ export class Volumetrics {
                     binding: 5,
                     visibility: GPUShaderStage.COMPUTE,
                     buffer: { type: "read-only-storage" }
+                },
+                { // lightingHistory
+                    binding: 6,
+                    visibility: GPUShaderStage.COMPUTE,
+                    texture: { sampleType: "float", viewDimension: "3d" }
+                },
+                { // volumeSampler
+                    binding: 7,
+                    visibility: GPUShaderStage.COMPUTE,
+                    sampler: { type: "filtering" }
                 }
             ]
         });
 
-        this.lightingComputeBindGroup = device.createBindGroup({
-            label: "volumetric lighting compute bind group",
-            layout: this.lightingComputeBindGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: { buffer: this.uniformsBuffer }
-                },
-                {
-                    binding: 1,
-                    resource: this.scatteringExtinctionBufferView
-                },
-                {
-                    binding: 2,
-                    resource: this.lightingBufferView
-                },
-                {
-                    binding: 3,
-                    resource: { buffer: this.camera.uniformsBuffer }
-                },
-                {
-                    binding: 4,
-                    resource: { buffer: this.lights.lightSetStorageBuffer }
-                },
-                {
-                    binding: 5,
-                    resource: { buffer: this.lights.clusterSetStorageBuffer }
-                }
-            ]
-        });
+        for (let i = 0; i < 2; i++) {
+            this.lightingComputeBindGroups[i] = device.createBindGroup({
+                label: "volumetric lighting compute bind group",
+                layout: this.lightingComputeBindGroupLayout,
+                entries: [
+                    {
+                        binding: 0,
+                        resource: { buffer: this.uniformsBuffer }
+                    },
+                    {
+                        binding: 1,
+                        resource: this.scatteringExtinctionBufferView
+                    },
+                    {
+                        binding: 2,
+                        resource: this.lightingBufferViews[i]
+                    },
+                    {
+                        binding: 3,
+                        resource: { buffer: this.camera.uniformsBuffer }
+                    },
+                    {
+                        binding: 4,
+                        resource: { buffer: this.lights.lightSetStorageBuffer }
+                    },
+                    {
+                        binding: 5,
+                        resource: { buffer: this.lights.clusterSetStorageBuffer }
+                    },
+                    {
+                        binding: 6,
+                        resource: this.lightingBufferViews[1 - i]
+                    },
+                    {
+                        binding: 7,
+                        resource: this.volumeSampler
+                    }
+                ]
+            });
+        }
 
         this.lightingComputePipeline = device.createComputePipeline({
             label: "volumetric lighting compute pipeline",
@@ -304,24 +327,26 @@ export class Volumetrics {
             ]
         });
 
-        this.integrationComputeBindGroup = device.createBindGroup({
-            label: "integration compute bind group",
-            layout: this.integrationComputeBindGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: { buffer: this.uniformsBuffer }
-                },
-                {
-                    binding: 1,
-                    resource: this.lightingBufferView
-                },
-                {
-                    binding: 2,
-                    resource: this.integrationBufferView
-                }
-            ]
-        });
+        for (let i = 0; i < 2; i++) {
+            this.integrationComputeBindGroups[i] = device.createBindGroup({
+                label: "integration compute bind group",
+                layout: this.integrationComputeBindGroupLayout,
+                entries: [
+                    {
+                        binding: 0,
+                        resource: { buffer: this.uniformsBuffer }
+                    },
+                    {
+                        binding: 1,
+                        resource: this.lightingBufferViews[i]
+                    },
+                    {
+                        binding: 2,
+                        resource: this.integrationBufferView
+                    }
+                ]
+            });
+        }
 
         this.integrationComputePipeline = device.createComputePipeline({
             label: "integration compute pipeline",
@@ -366,13 +391,15 @@ export class Volumetrics {
         computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, workgroupCountZ);
 
         computePass.setPipeline(this.lightingComputePipeline);
-        computePass.setBindGroup(shaders.constants.bindGroup_volumetric, this.lightingComputeBindGroup);
+        computePass.setBindGroup(shaders.constants.bindGroup_volumetric, this.lightingComputeBindGroups[this.lightingIndex]);
         computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY, workgroupCountZ);
 
         computePass.setPipeline(this.integrationComputePipeline);
-        computePass.setBindGroup(shaders.constants.bindGroup_volumetric, this.integrationComputeBindGroup);
+        computePass.setBindGroup(shaders.constants.bindGroup_volumetric, this.integrationComputeBindGroups[this.lightingIndex]);
         computePass.dispatchWorkgroups(workgroupCountX, workgroupCountY);
 
         computePass.end();
+
+        this.lightingIndex = 1 - this.lightingIndex;
     }
 }
