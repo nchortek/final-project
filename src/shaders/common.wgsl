@@ -48,7 +48,8 @@ struct VolumeUniforms {
     noiseFreq: f32,
     octaveCount: u32,
     densityScale: f32,
-    phaseG: f32
+    phaseG: f32,
+    sampleJitter: f32
 }
 
 const clusterZScale: f32 = f32(${gridDimZ}) / log2(f32(${farPlane}) / f32(${nearPlane}));

@@ -5,7 +5,7 @@ import { Camera } from "./camera";
 import { Lights } from "./lights";
 
 class VolumeUniforms {
-    static readonly bufferBytes = 12 * Float32Array.BYTES_PER_ELEMENT;
+    static readonly bufferBytes = 16 * Float32Array.BYTES_PER_ELEMENT;
     readonly buffer = new ArrayBuffer(VolumeUniforms.bufferBytes);
     private readonly floatView = new Float32Array(this.buffer);
     private readonly uintView = new Uint32Array(this.buffer);
@@ -49,6 +49,10 @@ class VolumeUniforms {
     set phaseG(g: number) {
         this.floatView.set(new Float32Array([g]), 11);
     }
+
+    set sampleJitter(jitter: number) {
+        this.floatView.set(new Float32Array([jitter]), 12);
+    }
 }
 
 export class Volumetrics {
@@ -57,6 +61,8 @@ export class Volumetrics {
 
     uniforms: VolumeUniforms = new VolumeUniforms();
     uniformsBuffer: GPUBuffer;
+
+    frameCount: number = 0;
 
     // A 3D texture used to store a volume's scattering and extinction
     // coefficients. One texel represents the data for one froxel.
@@ -375,11 +381,14 @@ export class Volumetrics {
         this.uniforms.octaveCount = 4;
         this.uniforms.densityScale = 1.0;
         this.uniforms.phaseG = 0.3;
-
-        device.queue.writeBuffer(this.uniformsBuffer, 0, this.uniforms.buffer);
     }
 
     computeVolumetrics(encoder: GPUCommandEncoder) {
+        this.uniforms.sampleJitter = (this.frameCount * 0.61803398875) % 1;
+        this.frameCount++;
+
+        device.queue.writeBuffer(this.uniformsBuffer, 0, this.uniforms.buffer);
+
         const workgroupCountX = Math.ceil(shaders.constants.froxelGridDimX / shaders.constants.froxelWorkgroupSizeX);
         const workgroupCountY = Math.ceil(shaders.constants.froxelGridDimY / shaders.constants.froxelWorkgroupSizeY);
         const workgroupCountZ = Math.ceil(shaders.constants.froxelGridDimZ / shaders.constants.froxelWorkgroupSizeZ);

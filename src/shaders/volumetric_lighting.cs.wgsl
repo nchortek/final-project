@@ -29,14 +29,7 @@ fn computeScatteredLight(@builtin(global_invocation_id) id: vec3u) {
     }
 
     let participatingMediaProperties: vec4f = textureLoad(scatteringExtinctionBuffer, id, 0);
-
-    // If the extinction coefficient is non-positive, then there is no volume in this froxel.
-    // Negative values shouldn't happen, but we'll cover them just to be safe.
-    if (participatingMediaProperties.a <= 0.0)
-    {
-        textureStore(lightingBuffer, id, vec4f(0.0));
-        return;
-    }
+    var totalLightContrib = vec3f(0.0);
 
     let froxelGridDims: vec3f = vec3f(f32(${froxelGridDimX}), f32(${froxelGridDimY}), f32(${froxelGridDimZ}));
 
@@ -54,35 +47,49 @@ fn computeScatteredLight(@builtin(global_invocation_id) id: vec3u) {
         camera.invProjMat,
         camera.invViewMat);
 
-    let viewZ: f32 = getViewZFromFroxelZSlice(
-        froxelZSlice,
+    let jitteredZSlice: f32 = f32(id.z) + volume.sampleJitter;
+    let jitteredWorldPos: vec3f = getFroxelWorldPosition(
+        uv,
+        jitteredZSlice,
         froxelGridDims.z,
         volume.volumeNearZ,
         volume.volumeFarZ,
-        volume.distributionExponent);
+        volume.distributionExponent,
+        camera.invProjMat,
+        camera.invViewMat);
 
-    let flatClusterIdx: u32 = getClusterIndex(viewZ, uv);
-    let cameraWorldPos: vec3f = camera.invViewMat[3].xyz;
-    let vecToCamera = normalize(cameraWorldPos - froxelWorldPos);
+    // Froxels without media have nothing to scatter, so skip the lighting work.
+    // They still go through the temporal blend below as a sample of zero.
+    if (participatingMediaProperties.a > 0.0) {
+        let viewZ: f32 = getViewZFromFroxelZSlice(
+            jitteredZSlice,
+            froxelGridDims.z,
+            volume.volumeNearZ,
+            volume.volumeFarZ,
+            volume.distributionExponent);
 
-    var totalLightContrib = vec3f(0.0);
-    for (var lightIdx = 0u; lightIdx < clusterSet.clusters[flatClusterIdx].numLights; lightIdx++) {
-        let light = lightSet.lights[clusterSet.clusters[flatClusterIdx].lightIndices[lightIdx]];
+        let flatClusterIdx: u32 = getClusterIndex(viewZ, uv);
+        let cameraWorldPos: vec3f = camera.invViewMat[3].xyz;
+        let vecToCamera = normalize(cameraWorldPos - jitteredWorldPos);
 
-        // Calculate light contribution
-        let vecToLight = light.pos - froxelWorldPos;
-        let distToLight = length(vecToLight);
-        let attenuation: f32 = rangeAttenuation(distToLight);
-        totalLightContrib += (light.color * attenuation * phase(normalize(vecToLight), vecToCamera, volume.phaseG));
+        for (var lightIdx = 0u; lightIdx < clusterSet.clusters[flatClusterIdx].numLights; lightIdx++) {
+            let light = lightSet.lights[clusterSet.clusters[flatClusterIdx].lightIndices[lightIdx]];
+
+            // Calculate light contribution
+            let vecToLight = light.pos - jitteredWorldPos;
+            let distToLight = length(vecToLight);
+            let attenuation: f32 = rangeAttenuation(distToLight);
+            totalLightContrib += (light.color * attenuation * phase(normalize(vecToLight), vecToCamera, volume.phaseG));
+        }
+
+        totalLightContrib += volume.ambientLightColor;
     }
-
-    totalLightContrib += volume.ambientLightColor;
 
     // Write the radiance scattered toward the camera (plus the extinction coefficient) for this froxel,
     // after blending with the previous frame's results
     var result: vec4f = vec4f(
         totalLightContrib * participatingMediaProperties.rgb,
-        participatingMediaProperties.a);
+        max(participatingMediaProperties.a, 0.0));
 
     let prevClip: vec4f = camera.prevViewProjMat * vec4f(froxelWorldPos, 1.0);
     let prevViewZ: f32 = prevClip.w;
