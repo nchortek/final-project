@@ -18,6 +18,7 @@ struct FragmentInput
     @location(2) uv: vec2f
 }
 
+const exposure: f32 = 2.0;
 const numFroxelZSlices: f32 = f32(${froxelGridDimZ});
 const invFroxelZSlices: f32 = 1.0 / numFroxelZSlices;
 
@@ -66,7 +67,7 @@ fn main(in: FragmentInput) -> @location(0) vec4f
     // .rgb holds the total in-scattered light that the volume sends toward the camera,
     // .a holds transmittance (the fraction of light that reaches the camera after traversing the volume)
     let scatteringTransmittance: vec4f = textureSampleLevel(integrationBuffer, volumeSampler, vec3f(screenUV, froxelW), 0.0);
-    let finalColor = (litSurfaceColor * scatteringTransmittance.a) + scatteringTransmittance.rgb;
+    let finalColor = ((litSurfaceColor * scatteringTransmittance.a) + scatteringTransmittance.rgb) * exposure;
 
     // Offset each pixel by up to half an 8-bit color level so that smooth gradients
     // don't quantize into visible bands
