@@ -59,8 +59,9 @@ fn perlinNoise(pos: vec3f) -> f32 {
 fn fractalPerlinNoise(p: vec3f, octaves: u32, time: f32) -> f32 {
     var total = 0.0;
     let persistence = 0.5;
-    var freq = 10.0;
+    var freq = volume.noiseFreq;
     var amp = 1.0;
+    var ampSqrSum = 0.0;
 
     let scaledTime = time * 0.25;
     let offset = vec3f(-scaledTime, scaledTime, -scaledTime);
@@ -69,10 +70,11 @@ fn fractalPerlinNoise(p: vec3f, octaves: u32, time: f32) -> f32 {
         let noiseStep = perlinNoise(p * freq + offset);
         total += noiseStep * amp;
         freq *= 2.0;
+        ampSqrSum += amp * amp;
         amp *= persistence;
     }
 
-    return total;
+    return clamp(total / sqrt(ampSqrSum), 0.0, 1.0);
 }
 
 @compute
@@ -97,10 +99,13 @@ fn populateParticipatingMediaProperties(@builtin(global_invocation_id) id: vec3u
         camera.invViewMat);
 
     // NCHORTEK TODO: Use noise to generate participating media properties for this froxel
-    let scatteringExtinction: vec4f = select(
-        10.0 * vec4f(vec3f(volume.scattering), volume.scattering + volume.absorption),
-        vec4f(0.0),
-        froxelWorldPos.y > 1.0);
+    //let scatteringExtinction: vec4f = select(
+        //10.0 * vec4f(vec3f(volume.scattering), volume.scattering + volume.absorption),
+        //vec4f(0.0),
+        //froxelWorldPos.y > 1.0);
+
+    let noise = volume.densityScale * fractalPerlinNoise(froxelWorldPos, volume.octaveCount, 0.0);
+    let scatteringExtinction: vec4f = noise * vec4f(vec3f(volume.scattering), volume.scattering + volume.absorption);
 
     textureStore(scatteringExtinctionBuffer,
         id,
