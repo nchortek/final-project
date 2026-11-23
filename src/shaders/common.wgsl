@@ -34,8 +34,8 @@ struct CameraUniforms {
     invProjMat: mat4x4f,
     screenResolution: vec2f,
     zNear: f32,
-    zFar: f32
-    // NCHORTEK TODO: Add additional uniforms needed for Forward+
+    zFar: f32,
+    prevViewProjMat: mat4x4f
 }
 
 struct VolumeUniforms {
