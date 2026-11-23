@@ -104,7 +104,7 @@ fn populateParticipatingMediaProperties(@builtin(global_invocation_id) id: vec3u
         //vec4f(0.0),
         //froxelWorldPos.y > 1.0);
 
-    let noise = volume.densityScale * fractalPerlinNoise(froxelWorldPos, volume.octaveCount, 0.0);
+    let noise = volume.densityScale * fractalPerlinNoise(froxelWorldPos, volume.octaveCount, volume.time);
     let scatteringExtinction: vec4f = noise * vec4f(vec3f(volume.scattering), volume.scattering + volume.absorption);
 
     textureStore(scatteringExtinctionBuffer,

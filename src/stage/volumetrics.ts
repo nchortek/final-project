@@ -10,40 +10,80 @@ class VolumeUniforms {
     private readonly floatView = new Float32Array(this.buffer);
     private readonly uintView = new Uint32Array(this.buffer);
 
+    get volumeNearZ(): number {
+        return this.floatView[0];
+    }
+
     set volumeNearZ(nearZ: number) {
         this.floatView.set(new Float32Array([nearZ]), 0);
+    }
+
+    get volumeFarZ(): number {
+        return this.floatView[1];
     }
 
     set volumeFarZ(farZ: number) {
         this.floatView.set(new Float32Array([farZ]), 1);
     }
 
+    get distributionExponent(): number {
+        return this.floatView[2];
+    }
+
     set distributionExponent(distrib: number) {
         this.floatView.set(new Float32Array([distrib]), 2);
+    }
+
+    get scattering(): number {
+        return this.floatView[3];
     }
 
     set scattering(scattering: number) {
         this.floatView.set(new Float32Array([scattering]), 3);
     }
 
+    get ambientLightColor(): Float32Array {
+        return this.floatView.slice(4, 7);
+    }
+
     set ambientLightColor(ambient: Float32Array) {
         this.floatView.set(ambient, 4);
+    }
+
+    get absorption(): number {
+        return this.floatView[7];
     }
 
     set absorption(absorption: number) {
         this.floatView.set(new Float32Array([absorption]), 7);
     }
 
+    get noiseFreq(): number {
+        return this.floatView[8];
+    }
+
     set noiseFreq(noiseFreq: number) {
         this.floatView.set(new Float32Array([noiseFreq]), 8);
+    }
+
+    get octaveCount(): number {
+        return this.uintView[9];
     }
 
     set octaveCount(octaveCount: number) {
         this.uintView.set(new Uint32Array([octaveCount]), 9);
     }
 
+    get densityScale(): number {
+        return this.floatView[10];
+    }
+
     set densityScale(densityScale: number) {
         this.floatView.set(new Float32Array([densityScale]), 10);
+    }
+
+    get phaseG(): number {
+        return this.floatView[11];
     }
 
     set phaseG(g: number) {
@@ -52,6 +92,10 @@ class VolumeUniforms {
 
     set sampleJitter(jitter: number) {
         this.floatView.set(new Float32Array([jitter]), 12);
+    }
+
+    set time(time: number) {
+        this.floatView.set(new Float32Array([time]), 13);
     }
 }
 
@@ -63,6 +107,11 @@ export class Volumetrics {
     uniformsBuffer: GPUBuffer;
 
     frameCount: number = 0;
+
+    // Multiplier on how quickly the noise animates (0 stops the animation)
+    animationSpeed: number = 1.0;
+    private animationTime: number = 0;
+    private lastFrameTimeMs: number = performance.now();
 
     // A 3D texture used to store a volume's scattering and extinction
     // coefficients. One texel represents the data for one froxel.
@@ -369,8 +418,8 @@ export class Volumetrics {
             }
         });
 
-        // Set our volume uniform values and write them to the GPU
-        // NCHORTEK TODO: These can potentially be tied to GUI sliders
+        // Set our default volume uniform values and write them to the GPU
+        // (Note that these are GUI-controllable)
         this.uniforms.volumeNearZ = 0.5;
         this.uniforms.volumeFarZ = 40.0;
         this.uniforms.distributionExponent = 1.0;
@@ -386,6 +435,12 @@ export class Volumetrics {
     computeVolumetrics(encoder: GPUCommandEncoder) {
         this.uniforms.sampleJitter = (this.frameCount * 0.61803398875) % 1;
         this.frameCount++;
+
+        // Accumulate time so that changing the speed doesn't make the noise jump
+        const nowMs = performance.now();
+        this.animationTime += ((nowMs - this.lastFrameTimeMs) / 1000) * this.animationSpeed;
+        this.lastFrameTimeMs = nowMs;
+        this.uniforms.time = this.animationTime;
 
         device.queue.writeBuffer(this.uniformsBuffer, 0, this.uniforms.buffer);
 
