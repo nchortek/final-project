@@ -109,7 +109,7 @@ export class Volumetrics {
     frameCount: number = 0;
 
     // Multiplier on how quickly the noise animates (0 stops the animation)
-    animationSpeed: number = 1.0;
+    animationSpeed: number = 0.5;
     private animationTime: number = 0;
     private lastFrameTimeMs: number = performance.now();
 
@@ -420,15 +420,15 @@ export class Volumetrics {
 
         // Set our default volume uniform values and write them to the GPU
         // (Note that these are GUI-controllable)
-        this.uniforms.volumeNearZ = 0.5;
+        this.uniforms.volumeNearZ = 0.2;
         this.uniforms.volumeFarZ = 40.0;
         this.uniforms.distributionExponent = 1.0;
         this.uniforms.scattering = 0.04;
         this.uniforms.ambientLightColor = new Float32Array([0.15, 0.15, 0.15]);
         this.uniforms.absorption = 0.01;
-        this.uniforms.noiseFreq = 1.0;
+        this.uniforms.noiseFreq = 10.0;
         this.uniforms.octaveCount = 4;
-        this.uniforms.densityScale = 100.0;
+        this.uniforms.densityScale = 30.0;
         this.uniforms.phaseG = 0.3;
     }
 

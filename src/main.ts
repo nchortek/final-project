@@ -66,8 +66,8 @@ fogFolder.open();
 const noiseFolder = fogFolder.addFolder('noise');
 noiseFolder.open();
 noiseFolder.add(volumeUniforms, 'densityScale', 0.0, 300.0, 1.0).name('density scale').onChange(resetTiming);
-noiseFolder.add(volumeUniforms, 'noiseFreq', 0.05, 5.0, 0.01).name('frequency').onChange(resetTiming);
-noiseFolder.add(volumeUniforms, 'octaveCount', 1, 8, 1).name('octaves').onChange(resetTiming);
+noiseFolder.add(volumeUniforms, 'noiseFreq', 0.05, 15.0, 0.01).name('frequency').onChange(resetTiming);
+noiseFolder.add(volumeUniforms, 'octaveCount', 1, 10, 1).name('octaves').onChange(resetTiming);
 noiseFolder.add(volumetrics, 'animationSpeed', 0.0, 5.0, 0.01).name('animation speed');
 
 const mediaFolder = fogFolder.addFolder('media');
