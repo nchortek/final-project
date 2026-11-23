@@ -85,6 +85,11 @@ so the user can alter the volume properties in real-time.
 
 You can see the current state of my project at the live site: https://nchortek.github.io/final-project/
 
+<img width="2557" height="1377" alt="groundFog" src="https://github.com/user-attachments/assets/a348048d-738b-4f22-8b6c-3b353b3cc3e9" />
+
+<img width="2557" height="1381" alt="fbmFog" src="https://github.com/user-attachments/assets/912934db-cb1d-44ea-8882-d5c9251f52fb" />
+
+
 ## Final submission (due 11/30)
 Time to polish! Spen this last week of your project using your generator to produce beautiful output. Add textures, tune parameters, play with colors, play with camera animation. Take the feedback from class critques and use it to take your project to the next level.
 
