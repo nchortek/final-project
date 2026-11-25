@@ -77,16 +77,18 @@ over the reference materials. Looking ahead, I think that the temporal integrati
 myself struggling to make-up lost ground as I work towards the next milestone deliverable.
 
 ## Milestone 2: Implementation part 2 (due 11/23)
-We're over halfway there! This week should be about fixing bugs and extending the core of your generator. Make sure by the end of this week _your generator works and is feature complete._ Any core engine features that don't make it in this week should be cut! Don't worry if you haven't managed to exactly hit your goals. We're more interested in seeing proof of your development effort than knowing your planned everything perfectly. 
 
-Put all your code in your forked repository.
+At this point I have implemented the core architecture described in Strand's blog post (the 3 compute passes: voxelization, lighting, and integration).
+I am fully caught up with my original implementation plan at this point, including generation of the volumetric density field via animated Perlin-FBM noise
+and temporal integration to hide artifacts along froxel z-slices. I have also added GUI elements to control the volumetric uniforms used by the shaders,
+so the user can alter the volume properties in real-time.
 
-Submission: Add a new section to your README titled: Milestone #3, which should include
-- written description of progress on your project goals. If you haven't hit all your goals, what did you have to cut and why? 
-- Detailed output from your generator, images, video, etc.
-We'll check your repository for updates. No need to create a new pull request.
+You can see the current state of my project at the live site: https://nchortek.github.io/final-project/
 
-Come to class on the due date with a WORKING COPY of your project. We'll be spending time in class critiquing and reviewing your work so far.
+<img width="2557" height="1377" alt="groundFog" src="https://github.com/user-attachments/assets/a348048d-738b-4f22-8b6c-3b353b3cc3e9" />
+
+<img width="2557" height="1381" alt="fbmFog" src="https://github.com/user-attachments/assets/912934db-cb1d-44ea-8882-d5c9251f52fb" />
+
 
 ## Final submission (due 11/30)
 Time to polish! Spen this last week of your project using your generator to produce beautiful output. Add textures, tune parameters, play with colors, play with camera animation. Take the feedback from class critques and use it to take your project to the next level.
