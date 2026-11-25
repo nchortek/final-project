@@ -2,9 +2,6 @@
 @group(${bindGroup_volumetric}) @binding(1) var<uniform> volume: VolumeUniforms;
 @group(${bindGroup_volumetric}) @binding(2) var scatteringExtinctionBuffer: texture_storage_3d<rgba16float, write>;
 
-const densityLow: f32 = 0.05;
-const densityHigh: f32 = 0.2;
-
 fn random3(p: vec3f) -> vec3f {
     return fract(
         sin(vec3f(
@@ -102,7 +99,7 @@ fn populateParticipatingMediaProperties(@builtin(global_invocation_id) id: vec3u
         camera.invViewMat);
 
     let noise: f32 = fractalPerlinNoise(froxelWorldPos, volume.octaveCount, volume.time);
-    let density: f32 = volume.densityScale * smoothstep(densityLow, densityHigh, noise);
+    let density: f32 = volume.densityScale * smoothstep(volume.densityLow, volume.densityHigh, noise);
     let scatteringExtinction: vec4f = density * vec4f(vec3f(volume.scattering), volume.scattering + volume.absorption);
 
     textureStore(scatteringExtinctionBuffer,

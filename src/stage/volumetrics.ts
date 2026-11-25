@@ -97,6 +97,22 @@ class VolumeUniforms {
     set time(time: number) {
         this.floatView.set(new Float32Array([time]), 13);
     }
+
+    get densityLow(): number {
+        return this.floatView[14];
+    }
+
+    set densityLow(low: number) {
+        this.floatView.set(new Float32Array([low]), 14);
+    }
+
+    get densityHigh(): number {
+        return this.floatView[15];
+    }
+
+    set densityHigh(high: number) {
+        this.floatView.set(new Float32Array([high]), 15);
+    }
 }
 
 export class Volumetrics {
@@ -430,6 +446,8 @@ export class Volumetrics {
         this.uniforms.octaveCount = 4;
         this.uniforms.densityScale = 30.0;
         this.uniforms.phaseG = 0.3;
+        this.uniforms.densityLow = 0.05;
+        this.uniforms.densityHigh = 0.2;
     }
 
     computeVolumetrics(encoder: GPUCommandEncoder) {

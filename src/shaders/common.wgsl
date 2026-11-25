@@ -50,7 +50,9 @@ struct VolumeUniforms {
     densityScale: f32,
     phaseG: f32,
     sampleJitter: f32,
-    time: f32
+    time: f32,
+    densityLow: f32,
+    densityHigh: f32
 }
 
 const clusterZScale: f32 = f32(${gridDimZ}) / log2(f32(${farPlane}) / f32(${nearPlane}));

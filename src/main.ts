@@ -70,6 +70,26 @@ noiseFolder.add(volumeUniforms, 'noiseFreq', 0.05, 15.0, 0.01).name('frequency')
 noiseFolder.add(volumeUniforms, 'octaveCount', 1, 10, 1).name('octaves').onChange(resetTiming);
 noiseFolder.add(volumetrics, 'animationSpeed', 0.0, 5.0, 0.01).name('animation speed');
 
+// smoothstep is undefined when low >= high, so we keep the two at least one step apart
+const densityLowController = noiseFolder.add(volumeUniforms, 'densityLow', -0.5, 0.8, 0.01).name('density low');
+const densityHighController = noiseFolder.add(volumeUniforms, 'densityHigh', -0.5, 0.8, 0.01).name('density high');
+
+densityLowController.onChange((low: number) => {
+    if (volumeUniforms.densityHigh < low + 0.01) {
+        volumeUniforms.densityHigh = low + 0.01;
+        densityHighController.updateDisplay();
+    }
+    resetTiming();
+});
+
+densityHighController.onChange((high: number) => {
+    if (volumeUniforms.densityLow > high - 0.01) {
+        volumeUniforms.densityLow = high - 0.01;
+        densityLowController.updateDisplay();
+    }
+    resetTiming();
+});
+
 const mediaFolder = fogFolder.addFolder('media');
 mediaFolder.open();
 mediaFolder.add(volumeUniforms, 'scattering', 0.0, 0.2, 0.001).onChange(resetTiming);
@@ -77,9 +97,11 @@ mediaFolder.add(volumeUniforms, 'absorption', 0.0, 0.1, 0.001).onChange(resetTim
 mediaFolder.add(volumeUniforms, 'phaseG', -0.95, 0.95, 0.01).name('phase g').onChange(resetTiming);
 const [ambientR, ambientG, ambientB] = volumeUniforms.ambientLightColor;
 const ambient = { r: ambientR, g: ambientG, b: ambientB };
+
 const updateAmbient = () => {
     volumeUniforms.ambientLightColor = new Float32Array([ambient.r, ambient.g, ambient.b]);
 };
+
 mediaFolder.add(ambient, 'r', 0.0, 1.0, 0.01).name('ambient r').onChange(updateAmbient);
 mediaFolder.add(ambient, 'g', 0.0, 1.0, 0.01).name('ambient g').onChange(updateAmbient);
 mediaFolder.add(ambient, 'b', 0.0, 1.0, 0.01).name('ambient b').onChange(updateAmbient);
