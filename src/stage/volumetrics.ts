@@ -125,7 +125,7 @@ export class Volumetrics {
     frameCount: number = 0;
 
     // Multiplier on how quickly the noise animates (0 stops the animation)
-    animationSpeed: number = 0.5;
+    animationSpeed: number = 0.0;
     private animationTime: number = 0;
     private lastFrameTimeMs: number = performance.now();
 
@@ -442,12 +442,12 @@ export class Volumetrics {
         this.uniforms.scattering = 0.04;
         this.uniforms.ambientLightColor = new Float32Array([0.15, 0.15, 0.15]);
         this.uniforms.absorption = 0.01;
-        this.uniforms.noiseFreq = 10.0;
-        this.uniforms.octaveCount = 4;
-        this.uniforms.densityScale = 30.0;
-        this.uniforms.phaseG = 0.3;
-        this.uniforms.densityLow = 0.05;
-        this.uniforms.densityHigh = 0.2;
+        this.uniforms.noiseFreq = 0.3;
+        this.uniforms.octaveCount = 8;
+        this.uniforms.densityScale = 100.0;
+        this.uniforms.phaseG = 0.15;
+        this.uniforms.densityLow = 0.35;
+        this.uniforms.densityHigh = 0.36;
     }
 
     computeVolumetrics(encoder: GPUCommandEncoder) {
