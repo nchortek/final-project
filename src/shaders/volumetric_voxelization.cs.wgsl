@@ -67,7 +67,7 @@ fn fractalPerlinNoise(p: vec3f, octaves: u32, time: f32) -> f32 {
     let offset = vec3f(-scaledTime, scaledTime, -scaledTime);
 
     for (var i = 1u; i <= octaves; i++) {
-        let noiseStep = perlinNoise(p * freq + offset);
+        let noiseStep = abs(perlinNoise(p * freq + offset));
         total += noiseStep * amp;
         freq *= 2.0;
         ampSqrSum += amp * amp;
